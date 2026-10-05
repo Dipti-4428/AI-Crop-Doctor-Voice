@@ -3,6 +3,14 @@ from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.cloud import texttospeech
+import os
+import json
+from google.oauth2 import service_account
+
+# Load the service account credentials
+credentials = service_account.Credentials.from_service_account_file(
+    "path/to/your/service-account-key.json"
+)
 
 app = FastAPI(title="AI Crop Doctor Voice API")
 app.add_middleware(
@@ -12,8 +20,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+google_credentials = os.getenv("GOOGLE_CREDENTIALS")
 
-client = texttospeech.TextToSpeechClient()
+if google_credentials:
+    credentials_info = json.loads(google_credentials)
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_info
+    )
+    client = texttospeech.TextToSpeechClient(credentials=credentials)
+else:
+    client = texttospeech.TextToSpeechClient()
+
 
 
 class SpeakRequest(BaseModel):
